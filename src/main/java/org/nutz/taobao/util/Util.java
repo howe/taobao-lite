@@ -4,6 +4,7 @@ import org.nutz.lang.Encoding;
 import org.nutz.lang.Lang;
 import org.nutz.lang.Strings;
 import org.nutz.lang.util.NutMap;
+import org.nutz.taobao.bean.Dict;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
@@ -38,10 +39,10 @@ public class Util {
             } else if (Strings.isBlank(key)) {
                 throw new NullPointerException("加密钥为空");
             } else {
-                if (Strings.equalsIgnoreCase(signType, "HMAC-MD5")) {
-                    return Lang.hmacmd5(Util.Url.encode(Util.buildParmas(params, new String[]{signName})), key);
+                if (Strings.equalsIgnoreCase(signType, Dict.SIGN_METHOD_HMAC)) {
+                    return Lang.hmacmd5(key + Util.buildParmas(params, new String[]{signName}), key).toUpperCase();
                 } else {
-                    return Lang.md5(Util.Url.encode(Util.buildParmas(params, new String[]{signName})) + key);
+                    return Lang.md5(key + Util.buildParmas(params, new String[]{signName}) + key).toUpperCase();
                 }
             }
         } catch (Exception e) {
@@ -60,18 +61,18 @@ public class Util {
      */
     public static Boolean checkSign(NutMap params, String key, String signType, String signName) {
 
-        String sign = params.getString("sign");
+        String sign = params.getString(Dict.SIGN_NAME);
         if (Lang.isEmpty(params) || Strings.isBlank(key)) {
             return false;
         } else {
-            if (Strings.equalsIgnoreCase(signType, "HMAC-SHA256")) {
-                if (Strings.equalsIgnoreCase(Lang.sha256(Util.Url.encode(Util.buildParmas(params, new String[]{signName})) + key), sign)) {
+            if (Strings.equalsIgnoreCase(signType, Dict.SIGN_METHOD_HMAC)) {
+                if (Strings.equalsIgnoreCase(Lang.hmacmd5(key + Util.buildParmas(params, new String[]{signName}), key), sign)) {
                     return true;
                 } else {
                     return false;
                 }
             } else {
-                if (Strings.equalsIgnoreCase(Lang.md5(Util.Url.encode(Util.buildParmas(params, new String[]{signName})) + key), sign)) {
+                if (Strings.equalsIgnoreCase(Lang.md5(key + Util.buildParmas(params, new String[]{signName}) + key), sign)) {
                     return true;
                 } else {
                     return false;
@@ -94,7 +95,7 @@ public class Util {
             return null;
         } else {
             Map<String, Object> map = new LinkedHashMap<>();
-            if (Strings.equalsIgnoreCase(order, "desc")) {
+            if (Strings.equalsIgnoreCase(order, Dict.SORT_DESC)) {
                 params.entrySet().stream()
                         .sorted(Map.Entry.<String, Object>comparingByKey().reversed())
                         .forEachOrdered(x -> map.put(x.getKey(), x.getValue()));
@@ -137,7 +138,7 @@ public class Util {
         if (Lang.isEmpty(params)) {
             return null;
         } else {
-            params = Util.sorting(params, "asc");
+            params = Util.sorting(params, Dict.SORT_ASC);
             StringBuffer sb = new StringBuffer();
             params.forEach((k, v) -> {
                 if (!Lang.isEmpty(v)) {
